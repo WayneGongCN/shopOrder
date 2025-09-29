@@ -10,7 +10,7 @@ const {
 
 const [host, port] = MYSQL_ADDRESS.split(":");
 
-const sequelize = new Sequelize("shop_order", MYSQL_USERNAME, MYSQL_PASSWORD, {
+const sequelize = new Sequelize("order_dev", MYSQL_USERNAME, MYSQL_PASSWORD, {
   host,
   port,
   dialect: "mysql",
