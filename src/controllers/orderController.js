@@ -26,12 +26,12 @@ async function createOrder(req, res) {
     
     // 创建订单
     const order = await Order.create({
-      order_no: orderNo,
-      customer_id: customerId,
-      total_amount: 0,
+      orderNo,
+      customerId,
+      totalAmount: 0,
       status: "draft",
       remark,
-      created_by: req.headers["x-wx-openid"] || "system"
+      createdBy: req.headers["x-wx-openid"] || "system"
     }, { transaction });
     
     let totalAmount = 0;
@@ -51,22 +51,22 @@ async function createOrder(req, res) {
       totalAmount += totalPrice;
       
       await OrderItem.create({
-        order_id: order.id,
-        product_id: productId,
-        product_name: product.name,
+        orderId: order.id,
+        productId,
+        productName: product.name,
         unit,
         quantity,
-        unit_price: unitPrice,
-        total_price: totalPrice
+        unitPrice,
+        totalPrice
       }, { transaction });
     }
     
     // 更新订单总金额
-    await order.update({ total_amount: totalAmount }, { transaction });
+    await order.update({ totalAmount }, { transaction });
     
     // 记录订单历史
     await OrderHistory.create({
-      order_id: order.id,
+      orderId: order.id,
       action: "created",
       description: "订单创建",
       operator: req.headers["x-wx-openid"] || "system",
@@ -132,7 +132,7 @@ async function getOrders(req, res) {
     
     // 客户筛选
     if (customerId) {
-      where.customer_id = customerId;
+      where.customerId = customerId;
     }
     
     // 日期范围筛选
@@ -252,20 +252,20 @@ async function updateOrderStatus(req, res) {
     
     // 记录状态流转
     await OrderStatusFlow.create({
-      order_id: id,
-      from_status: oldStatus,
-      to_status: status,
+      orderId: id,
+      fromStatus: oldStatus,
+      toStatus: status,
       operator,
       remark
     }, { transaction });
     
     // 记录订单历史
     await OrderHistory.create({
-      order_id: id,
+      orderId: id,
       action: "status_changed",
       description: `订单状态从 ${oldStatus} 变更为 ${status}`,
       operator,
-      changes: { from_status: oldStatus, to_status: status }
+      changes: { fromStatus: oldStatus, toStatus: status }
     }, { transaction });
     
     await transaction.commit();
@@ -288,7 +288,7 @@ async function getOrderStatusFlows(req, res) {
     const { id } = req.params;
     
     const flows = await OrderStatusFlow.findAll({
-      where: { order_id: id },
+      where: { orderId: id },
       order: [["created_at", "ASC"]]
     });
     
@@ -311,8 +311,8 @@ async function getCustomerProductPrice(req, res) {
     // 查找客户专属价格
     const customerPrice = await CustomerPrice.findOne({
       where: {
-        customer_id: customerId,
-        product_id: productId
+        customerId,
+        productId
       }
     });
     
@@ -324,7 +324,7 @@ async function getCustomerProductPrice(req, res) {
       }
       
       return res.json(success({
-        price: product.global_price,
+        price: product.globalPrice,
         isCustom: false
       }));
     }

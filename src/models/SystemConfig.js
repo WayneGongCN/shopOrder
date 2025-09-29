@@ -8,16 +8,18 @@ const SystemConfig = sequelize.define("SystemConfig", {
     defaultValue: DataTypes.UUIDV4,
     comment: "配置ID"
   },
-  config_key: {
+  configKey: {
     type: DataTypes.STRING(50),
     allowNull: false,
     unique: true,
-    comment: "配置键"
+    comment: "配置键",
+    field: "config_key"
   },
-  config_value: {
+  configValue: {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: "配置值"
+    comment: "配置值",
+    field: "config_value"
   },
   description: {
     type: DataTypes.STRING(200),

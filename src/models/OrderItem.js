@@ -8,20 +8,23 @@ const OrderItem = sequelize.define("OrderItem", {
     defaultValue: DataTypes.UUIDV4,
     comment: "订单项ID"
   },
-  order_id: {
+  orderId: {
     type: DataTypes.STRING(36),
     allowNull: false,
-    comment: "订单ID"
+    comment: "订单ID",
+    field: "order_id"
   },
-  product_id: {
+  productId: {
     type: DataTypes.STRING(36),
     allowNull: false,
-    comment: "商品ID"
+    comment: "商品ID",
+    field: "product_id"
   },
-  product_name: {
+  productName: {
     type: DataTypes.STRING(100),
     allowNull: false,
-    comment: "商品名称（冗余存储）"
+    comment: "商品名称（冗余存储）",
+    field: "product_name"
   },
   unit: {
     type: DataTypes.STRING(20),
@@ -34,17 +37,19 @@ const OrderItem = sequelize.define("OrderItem", {
     defaultValue: 0,
     comment: "数量"
   },
-  unit_price: {
+  unitPrice: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
     defaultValue: 0.00,
-    comment: "单价"
+    comment: "单价",
+    field: "unit_price"
   },
-  total_price: {
+  totalPrice: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
     defaultValue: 0.00,
-    comment: "小计"
+    comment: "小计",
+    field: "total_price"
   },
   remark: {
     type: DataTypes.TEXT,

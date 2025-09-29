@@ -16,6 +16,7 @@ router.use("/analytics", analyticsRoutes);
 // 健康检查接口
 router.get("/health", (req, res) => {
   res.json({
+    success: true,
     code: 200,
     message: "服务运行正常",
     data: {

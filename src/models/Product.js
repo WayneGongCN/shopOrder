@@ -13,11 +13,12 @@ const Product = sequelize.define("Product", {
     allowNull: false,
     comment: "商品名称"
   },
-  global_price: {
+  globalPrice: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
     defaultValue: 0.00,
-    comment: "默认售价"
+    comment: "默认售价",
+    field: "global_price"
   },
   unit: {
     type: DataTypes.STRING(20),

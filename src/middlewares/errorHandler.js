@@ -17,6 +17,7 @@ function errorHandler(err, req, res, next) {
       message: error.message
     }));
     return res.status(400).json({
+      success: false,
       code: 400,
       message: "数据验证失败",
       data: errors,
@@ -27,6 +28,7 @@ function errorHandler(err, req, res, next) {
   // Sequelize唯一约束错误
   if (err.name === "SequelizeUniqueConstraintError") {
     return res.status(400).json({
+      success: false,
       code: 400,
       message: "数据已存在",
       data: null,
@@ -37,6 +39,7 @@ function errorHandler(err, req, res, next) {
   // Sequelize外键约束错误
   if (err.name === "SequelizeForeignKeyConstraintError") {
     return res.status(400).json({
+      success: false,
       code: 400,
       message: "关联数据不存在",
       data: null,

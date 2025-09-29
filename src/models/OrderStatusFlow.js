@@ -8,20 +8,23 @@ const OrderStatusFlow = sequelize.define("OrderStatusFlow", {
     defaultValue: DataTypes.UUIDV4,
     comment: "状态流转ID"
   },
-  order_id: {
+  orderId: {
     type: DataTypes.STRING(36),
     allowNull: false,
-    comment: "订单ID"
+    comment: "订单ID",
+    field: "order_id"
   },
-  from_status: {
+  fromStatus: {
     type: DataTypes.STRING(50),
     allowNull: true,
-    comment: "原状态"
+    comment: "原状态",
+    field: "from_status"
   },
-  to_status: {
+  toStatus: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    comment: "目标状态"
+    comment: "目标状态",
+    field: "to_status"
   },
   operator: {
     type: DataTypes.STRING(50),

@@ -141,9 +141,9 @@ async function getCustomerPrices(req, res) {
     const { customerId } = req.params;
     const { productId } = req.query;
     
-    const where = { customer_id: customerId };
+    const where = { customerId };
     if (productId) {
-      where.product_id = productId;
+      where.productId = productId;
     }
     
     const prices = await CustomerPrice.findAll({
@@ -152,7 +152,7 @@ async function getCustomerPrices(req, res) {
         {
           model: Product,
           as: "product",
-          attributes: ["id", "name", "global_price", "unit"]
+          attributes: ["id", "name", "globalPrice", "unit"]
         }
       ],
       order: [["created_at", "DESC"]]
@@ -190,12 +190,12 @@ async function setCustomerPrice(req, res) {
     // 创建或更新专属价格
     const [customerPrice, created] = await CustomerPrice.findOrCreate({
       where: {
-        customer_id: customerId,
-        product_id: productId
+        customerId,
+        productId
       },
       defaults: {
-        customer_id: customerId,
-        product_id: productId,
+        customerId,
+        productId,
         price
       }
     });
@@ -210,7 +210,7 @@ async function setCustomerPrice(req, res) {
         {
           model: Product,
           as: "product",
-          attributes: ["id", "name", "global_price", "unit"]
+          attributes: ["id", "name", "globalPrice", "unit"]
         }
       ]
     });
@@ -234,7 +234,7 @@ async function deleteCustomerPrice(req, res) {
     const customerPrice = await CustomerPrice.findOne({
       where: {
         id: priceId,
-        customer_id: customerId
+        customerId
       }
     });
     

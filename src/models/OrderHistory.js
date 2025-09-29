@@ -8,10 +8,11 @@ const OrderHistory = sequelize.define("OrderHistory", {
     defaultValue: DataTypes.UUIDV4,
     comment: "历史记录ID"
   },
-  order_id: {
+  orderId: {
     type: DataTypes.STRING(36),
     allowNull: false,
-    comment: "订单ID"
+    comment: "订单ID",
+    field: "order_id"
   },
   action: {
     type: DataTypes.STRING(50),

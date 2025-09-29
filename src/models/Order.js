@@ -8,22 +8,25 @@ const Order = sequelize.define("Order", {
     defaultValue: DataTypes.UUIDV4,
     comment: "订单ID"
   },
-  order_no: {
+  orderNo: {
     type: DataTypes.STRING(20),
     allowNull: false,
     unique: true,
-    comment: "订单号"
+    comment: "订单号",
+    field: "order_no"
   },
-  customer_id: {
+  customerId: {
     type: DataTypes.STRING(36),
     allowNull: false,
-    comment: "客户ID"
+    comment: "客户ID",
+    field: "customer_id"
   },
-  total_amount: {
+  totalAmount: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
     defaultValue: 0.00,
-    comment: "订单总金额"
+    comment: "订单总金额",
+    field: "total_amount"
   },
   status: {
     type: DataTypes.STRING(50),
@@ -36,10 +39,11 @@ const Order = sequelize.define("Order", {
     allowNull: true,
     comment: "备注信息"
   },
-  created_by: {
+  createdBy: {
     type: DataTypes.STRING(50),
     allowNull: true,
-    comment: "创建人"
+    comment: "创建人",
+    field: "created_by"
   }
 }, {
   tableName: "orders",

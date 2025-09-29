@@ -159,19 +159,19 @@ async function getTopProducts(req, res) {
         }
       ],
       attributes: [
-        "product_id",
+        "productId",
         [literal("SUM(quantity)"), "totalQuantity"],
         [literal("SUM(total_price)"), "totalAmount"],
         [literal("COUNT(DISTINCT order_id)"), "orderCount"]
       ],
-      group: ["product_id"],
+      group: ["productId"],
       order: [[literal("totalQuantity"), "DESC"]],
       limit: parseInt(limit),
       raw: false
     });
     
     const result = topProducts.map(item => ({
-      productId: item.product_id,
+      productId: item.productId,
       productName: item.product.name,
       unit: item.product.unit,
       totalQuantity: parseFloat(item.dataValues.totalQuantity),
@@ -219,19 +219,19 @@ async function getCustomerAnalytics(req, res) {
         }
       ],
       attributes: [
-        "customer_id",
+        "customerId",
         [literal("COUNT(*)"), "orderCount"],
         [literal("SUM(total_amount)"), "totalAmount"],
         [literal("AVG(total_amount)"), "averageAmount"]
       ],
-      group: ["customer_id"],
+      group: ["customerId"],
       order: [[literal("totalAmount"), "DESC"]],
       limit: 20,
       raw: false
     });
     
     const result = customerStats.map(stat => ({
-      customerId: stat.customer_id,
+      customerId: stat.customerId,
       customerName: stat.customer.name,
       orderCount: parseInt(stat.dataValues.orderCount),
       totalAmount: parseFloat(stat.dataValues.totalAmount),

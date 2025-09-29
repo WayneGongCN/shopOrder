@@ -19,14 +19,6 @@ app.use(logger);
 // 静态文件服务
 app.use(express.static(path.join(__dirname, "public")));
 
-// 首页
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-// API路由
-app.use("/api", routes);
-
 // 小程序调用，获取微信 Open ID
 app.get("/api/wx_openid", (req, res) => {
   if (req.headers["x-wx-source"]) {
@@ -45,6 +37,9 @@ app.get("/api/wx_openid", (req, res) => {
     });
   }
 });
+
+// API路由
+app.use("/api", routes);
 
 // 404处理
 app.use(notFoundHandler);

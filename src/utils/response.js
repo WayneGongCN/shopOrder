@@ -11,6 +11,7 @@
  */
 function success(data = null, message = "success", code = 200) {
   return {
+    success: true,
     code,
     message,
     data,
@@ -31,6 +32,7 @@ function pagination(list = [], total = 0, page = 1, pageSize = 20, message = "su
   const totalPages = Math.ceil(total / pageSize);
   
   return {
+    success: true,
     code: 200,
     message,
     data: {
@@ -53,6 +55,7 @@ function pagination(list = [], total = 0, page = 1, pageSize = 20, message = "su
  */
 function error(message = "error", code = 500, data = null) {
   return {
+    success: false,
     code,
     message,
     data,

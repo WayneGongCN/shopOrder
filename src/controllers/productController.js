@@ -13,7 +13,7 @@ async function createProduct(req, res) {
     
     const product = await Product.create({
       name,
-      global_price: globalPrice,
+      globalPrice,
       unit
     });
     
@@ -97,7 +97,7 @@ async function updateProduct(req, res) {
     
     await product.update({
       name,
-      global_price: globalPrice,
+      globalPrice,
       unit
     });
     
@@ -140,7 +140,7 @@ async function deleteProduct(req, res) {
 async function getAllProducts(req, res) {
   try {
     const products = await Product.findAll({
-      attributes: ["id", "name", "global_price", "unit"],
+      attributes: ["id", "name", "globalPrice", "unit"],
       order: [["name", "ASC"]]
     });
     

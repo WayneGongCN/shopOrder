@@ -8,15 +8,17 @@ const CustomerPrice = sequelize.define("CustomerPrice", {
     defaultValue: DataTypes.UUIDV4,
     comment: "客户专属价格ID"
   },
-  customer_id: {
+  customerId: {
     type: DataTypes.STRING(36),
     allowNull: false,
-    comment: "客户ID"
+    comment: "客户ID",
+    field: "customer_id"
   },
-  product_id: {
+  productId: {
     type: DataTypes.STRING(36),
     allowNull: false,
-    comment: "商品ID"
+    comment: "商品ID",
+    field: "product_id"
   },
   price: {
     type: DataTypes.DECIMAL(10, 2),
