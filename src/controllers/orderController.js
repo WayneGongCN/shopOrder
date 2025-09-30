@@ -184,7 +184,6 @@ async function getOrders(req, res) {
 async function getOrderById(req, res) {
   try {
     const { id } = req.params;
-    const { includeHistory } = req.query;
     
     const include = [
       {
@@ -202,17 +201,13 @@ async function getOrderById(req, res) {
             attributes: ["id", "name", "globalPrice", "unit"]
           }
         ]
-      }
-    ];
-    
-    // 如果需要包含历史记录
-    if (includeHistory === "true") {
-      include.push({
+      },
+      {
         model: OrderHistory,
         as: "histories",
         order: [["created_at", "DESC"]]
-      });
-    }
+      }
+    ];
     
     const order = await Order.findByPk(id, { include });
     
@@ -220,7 +215,27 @@ async function getOrderById(req, res) {
       return res.status(404).json(notFound("订单不存在"));
     }
     
-    res.json(success(order));
+    // 获取状态信息和流转历史
+    const statusInfo = {
+      currentStatus: order.status,
+      currentStatusDesc: orderStatusService.getStatusDescription(order.status),
+      availableTransitions: orderStatusService.getAvailableTransitions(order.status).map(status => ({
+        status,
+        description: orderStatusService.getStatusDescription(status)
+      })),
+      canCancel: orderStatusService.canCancelOrder(order)
+    };
+    
+    const statusFlows = await orderStatusService.getStatusFlowHistory(id);
+    
+    // 构建完整的订单详情响应
+    const orderDetail = {
+      ...order.toJSON(),
+      statusInfo,
+      statusFlows
+    };
+    
+    res.json(success(orderDetail));
   } catch (error) {
     console.error("获取订单详情失败:", error);
     res.status(500).json(serverError("获取订单详情失败"));
@@ -263,23 +278,6 @@ async function updateOrderStatus(req, res) {
   }
 }
 
-/**
- * 获取订单状态流转记录
- * @param {object} req 请求对象
- * @param {object} res 响应对象
- */
-async function getOrderStatusFlows(req, res) {
-  try {
-    const { id } = req.params;
-    
-    const flows = await orderStatusService.getStatusFlowHistory(id);
-    
-    res.json(success(flows));
-  } catch (error) {
-    console.error("获取订单状态流转记录失败:", error);
-    res.status(500).json(serverError("获取订单状态流转记录失败"));
-  }
-}
 
 /**
  * 获取客户专属价格（用于订单创建时的价格计算）
@@ -357,19 +355,6 @@ async function cancelOrder(req, res) {
   }
 }
 
-/**
- * 获取订单状态信息
- * @param {object} req 请求对象
- * @param {object} res 响应对象
- */
-async function getOrderStatusInfo(req, res) {
-  try {
-    res.json(success(req.orderStatusInfo));
-  } catch (error) {
-    console.error("获取订单状态信息失败:", error);
-    res.status(500).json(serverError("获取订单状态信息失败"));
-  }
-}
 
 
 module.exports = {
@@ -377,8 +362,6 @@ module.exports = {
   getOrders,
   getOrderById,
   updateOrderStatus,
-  getOrderStatusFlows,
   getCustomerProductPrice,
-  cancelOrder,
-  getOrderStatusInfo
+  cancelOrder
 };

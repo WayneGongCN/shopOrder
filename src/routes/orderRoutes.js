@@ -5,10 +5,8 @@ const {
   getOrders,
   getOrderById,
   updateOrderStatus,
-  getOrderStatusFlows,
   getCustomerProductPrice,
-  cancelOrder,
-  getOrderStatusInfo
+  cancelOrder
 } = require("../controllers/orderController");
 const { validateRequest, validateQuery } = require("../middlewares/validation");
 const { orderSchema, orderStatusSchema, paginationSchema } = require("../utils/validation");
@@ -30,11 +28,6 @@ router.put("/:id/status",
   updateOrderStatus
 );
 
-// 获取订单状态流转记录
-router.get("/:id/status-flows", getOrderStatusFlows);
-
-// 获取订单状态信息
-router.get("/:id/status-info", StatusValidationMiddleware.getOrderStatusInfo, getOrderStatusInfo);
 
 // 取消订单
 router.put("/:id/cancel", 
