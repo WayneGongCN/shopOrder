@@ -4,12 +4,13 @@ const {
   createOrder,
   getOrders,
   getOrderById,
+  updateOrder,
   updateOrderStatus,
   getCustomerProductPrice,
   cancelOrder
 } = require("../controllers/orderController");
 const { validateRequest, validateQuery } = require("../middlewares/validation");
-const { orderSchema, orderStatusSchema, paginationSchema } = require("../utils/validation");
+const { orderSchema, orderUpdateSchema, orderStatusSchema, paginationSchema } = require("../utils/validation");
 const StatusValidationMiddleware = require("../middlewares/statusValidation");
 
 // 创建订单
@@ -20,6 +21,9 @@ router.get("/", validateQuery(paginationSchema), getOrders);
 
 // 获取订单详情
 router.get("/:id", getOrderById);
+
+// 更新订单信息
+router.put("/:id", validateRequest(orderUpdateSchema), updateOrder);
 
 // 更新订单状态
 router.put("/:id/status", 

@@ -138,19 +138,19 @@ async function getOrders(req, res) {
     
     // 日期范围筛选
     if (startDate || endDate) {
-      where.created_at = {};
+      where.createdAt = {};
       if (startDate) {
-        where.created_at[Op.gte] = new Date(startDate);
+        where.createdAt[Op.gte] = new Date(startDate);
       }
       if (endDate) {
-        where.created_at[Op.lte] = new Date(endDate);
+        where.createdAt[Op.lte] = new Date(endDate);
       }
     }
     
     // 关键词搜索（订单号、客户名称）
     if (keyword) {
       where[Op.or] = [
-        { order_no: { [Op.like]: `%${keyword}%` } },
+        { orderNo: { [Op.like]: `%${keyword}%` } },
         { "$customer.name$": { [Op.like]: `%${keyword}%` } }
       ];
     }
@@ -166,7 +166,7 @@ async function getOrders(req, res) {
       ],
       limit: parseInt(pageSize),
       offset,
-      order: [["created_at", "DESC"]]
+      order: [["createdAt", "DESC"]]
     });
     
     res.json(pagination(rows, count, page, pageSize));
@@ -243,6 +243,138 @@ async function getOrderById(req, res) {
 }
 
 /**
+ * 更新订单信息
+ * @param {object} req 请求对象
+ * @param {object} res 响应对象
+ */
+async function updateOrder(req, res) {
+  const transaction = await Order.sequelize.transaction();
+  
+  try {
+    const { id } = req.params;
+    const { customerId, items, remark, operator } = req.body;
+    
+    // 检查订单是否存在
+    const order = await Order.findByPk(id, { 
+      include: [{ model: OrderItem, as: "items" }],
+      transaction 
+    });
+    if (!order) {
+      await transaction.rollback();
+      return res.status(404).json(notFound("订单不存在"));
+    }
+    
+    // 检查订单状态是否允许修改（只有草稿状态可以修改）
+    if (order.status !== "draft") {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: "只有草稿状态的订单可以修改"
+      });
+    }
+    
+    const updateData = {};
+    const changes = {};
+    
+    // 更新客户信息
+    if (customerId && customerId !== order.customerId) {
+      // 检查新客户是否存在
+      const customer = await Customer.findByPk(customerId, { transaction });
+      if (!customer) {
+        await transaction.rollback();
+        return res.status(404).json(notFound("客户不存在"));
+      }
+      
+      updateData.customerId = customerId;
+      changes.customerId = { from: order.customerId, to: customerId };
+    }
+    
+    // 更新备注
+    if (remark !== undefined && remark !== order.remark) {
+      updateData.remark = remark;
+      changes.remark = { from: order.remark, to: remark };
+    }
+    
+    // 更新订单项（直接替换所有订单项）
+    if (items && items.length > 0) {
+      await handleReplaceItems(id, items, changes, transaction);
+    }
+    
+    // 重新计算总金额
+    const currentItems = await OrderItem.findAll({
+      where: { orderId: id },
+      transaction
+    });
+    
+    const totalAmount = currentItems.reduce((sum, item) => sum + parseFloat(item.totalPrice), 0);
+    updateData.totalAmount = totalAmount;
+    
+    if (totalAmount !== parseFloat(order.totalAmount)) {
+      changes.totalAmount = { from: order.totalAmount, to: totalAmount };
+    }
+    
+    // 更新订单
+    if (Object.keys(updateData).length > 0) {
+      await order.update(updateData, { transaction });
+      
+      // 记录订单历史
+      await OrderHistory.create({
+        orderId: id,
+        action: "order_updated",
+        description: "订单信息更新",
+        operator,
+        changes
+      }, { transaction });
+    }
+    
+    await transaction.commit();
+    
+    res.json(success(null, "订单更新成功"));
+  } catch (error) {
+    await transaction.rollback();
+    console.error("更新订单失败:", error);
+    res.status(500).json(serverError("更新订单失败"));
+  }
+}
+
+/**
+ * 处理替换所有订单项
+ */
+async function handleReplaceItems(orderId, items, changes, transaction) {
+  // 删除原有订单项
+  await OrderItem.destroy({
+    where: { orderId },
+    transaction
+  });
+  
+  // 创建新的订单项
+  for (const item of items) {
+    const { productId, quantity, unit, unitPrice } = item;
+    
+    // 获取商品信息
+    const product = await Product.findByPk(productId, { transaction });
+    if (!product) {
+      throw new Error(`商品不存在: ${productId}`);
+    }
+    
+    const totalPrice = quantity * unitPrice;
+    
+    await OrderItem.create({
+      orderId,
+      productId,
+      productName: product.name,
+      unit,
+      quantity,
+      unitPrice,
+      totalPrice
+    }, { transaction });
+  }
+  
+  changes.items = { from: "原有订单项", to: `${items.length}个新订单项` };
+}
+
+
+/**
  * 更新订单状态
  * @param {object} req 请求对象
  * @param {object} res 响应对象
@@ -252,7 +384,11 @@ async function updateOrderStatus(req, res) {
   
   try {
     const { id } = req.params;
-    const { status, operator, role = "admin", remark } = req.body;
+    const { status, remark } = req.body;
+    
+    // 自动获取操作人信息
+    const operator = req.headers["x-wx-openid"] || "unknown";
+    const role = "admin";
     
     // 使用状态管理服务执行状态流转
     const result = await orderStatusService.transitionStatus(
@@ -330,7 +466,11 @@ async function cancelOrder(req, res) {
   
   try {
     const { id } = req.params;
-    const { operator, role = "admin", remark } = req.body;
+    const { remark } = req.body;
+    
+    // 自动获取操作人信息
+    const operator = req.headers["x-user-name"] || req.headers["x-wx-openid"] || "system";
+    const role = "admin";
     
     const result = await orderStatusService.transitionStatus(
       id,
@@ -361,6 +501,7 @@ module.exports = {
   createOrder,
   getOrders,
   getOrderById,
+  updateOrder,
   updateOrderStatus,
   getCustomerProductPrice,
   cancelOrder

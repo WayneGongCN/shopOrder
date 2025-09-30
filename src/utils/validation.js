@@ -105,6 +105,30 @@ const orderSchema = Joi.object({
 });
 
 /**
+ * 订单更新验证模式
+ */
+const orderUpdateSchema = Joi.object({
+  customerId: Joi.string().uuid().optional().messages({
+    "string.guid": "客户ID格式不正确"
+  }),
+  remark: Joi.string().allow("").optional(),
+  operator: Joi.string().max(50).required().messages({
+    "string.empty": "操作人不能为空"
+  }),
+  items: Joi.array().items(orderItemSchema).min(1).optional().messages({
+    "array.min": "订单至少包含一个商品"
+  })
+}).custom((value, helpers) => {
+  // 确保至少有一个更新内容
+  if (!value.customerId && !value.remark && !value.items) {
+    return helpers.error("custom.noUpdateContent");
+  }
+  return value;
+}).messages({
+  "custom.noUpdateContent": "至少需要提供一个更新内容"
+});
+
+/**
  * 订单状态更新验证模式
  */
 const orderStatusSchema = Joi.object({
@@ -112,12 +136,6 @@ const orderStatusSchema = Joi.object({
     "draft", "processing", "completed", "cancelled"
   ).required().messages({
     "any.only": "订单状态值不正确"
-  }),
-  operator: Joi.string().max(50).required().messages({
-    "string.empty": "操作人不能为空"
-  }),
-  role: Joi.string().valid("admin").default("admin").messages({
-    "any.only": "角色值不正确"
   }),
   remark: Joi.string().allow("").optional()
 });
@@ -142,6 +160,7 @@ module.exports = {
   customerSchema,
   orderItemSchema,
   orderSchema,
+  orderUpdateSchema,
   orderStatusSchema,
   customerPriceSchema
 };

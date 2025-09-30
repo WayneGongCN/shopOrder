@@ -14,7 +14,7 @@ class StatusValidationMiddleware {
    */
   static async validateStatusTransition(req, res, next) {
     try {
-      const { status, operator, role = "admin" } = req.body;
+      const { status } = req.body;
       const { id } = req.params;
 
       // 获取当前订单状态
@@ -44,10 +44,10 @@ class StatusValidationMiddleware {
         ));
       }
 
-      // 验证用户权限
-      if (!orderStatusService.hasPermission(role, status)) {
+      // 验证用户权限（固定为admin角色）
+      if (!orderStatusService.hasPermission("admin", status)) {
         return res.status(403).json(badRequest(
-          `用户角色 ${role} 没有权限将状态变更为 ${orderStatusService.getStatusDescription(status)}`
+          `没有权限将状态变更为 ${orderStatusService.getStatusDescription(status)}`
         ));
       }
 
@@ -56,8 +56,6 @@ class StatusValidationMiddleware {
         order,
         currentStatus: order.status,
         targetStatus: status,
-        operator,
-        role,
         isValid: true
       };
 
@@ -82,7 +80,6 @@ class StatusValidationMiddleware {
   static async validateOrderCancellation(req, res, next) {
     try {
       const { id } = req.params;
-      const { role = "admin" } = req.body;
 
       // 获取订单信息
       const { Order } = require("../models");
@@ -101,18 +98,17 @@ class StatusValidationMiddleware {
         return res.status(400).json(badRequest(canCancel.reason));
       }
 
-      // 验证用户权限
-      if (!orderStatusService.hasPermission(role, orderStatusService.STATUS.CANCELLED)) {
+      // 验证用户权限（固定为admin角色）
+      if (!orderStatusService.hasPermission("admin", orderStatusService.STATUS.CANCELLED)) {
         return res.status(403).json(badRequest(
-          `用户角色 ${role} 没有权限取消订单`
+          `没有权限取消订单`
         ));
       }
 
       // 将验证信息添加到请求对象中
       req.cancellationValidation = {
         order,
-        canCancel: true,
-        role
+        canCancel: true
       };
 
       next();
