@@ -1,10 +1,10 @@
 const { Sequelize } = require("sequelize");
 
-// 从环境变量中读取数据库配置
+// 从环境变量中读取数据库配置，如果没有则使用默认值
 const { 
-  MYSQL_USERNAME, 
-  MYSQL_PASSWORD, 
-  MYSQL_ADDRESS = "",
+  MYSQL_USERNAME = "root", 
+  MYSQL_PASSWORD = "zR6xkrxS", 
+  MYSQL_ADDRESS = "sh-cynosdbmysql-grp-79rkmnq0.sql.tencentcdb.com:24757",
   NODE_ENV = "development"
 } = process.env;
 

@@ -4,18 +4,23 @@
   "description": "微信云托管 express 框架模版",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "export:csv": "node scripts/exportToCsv.js",
+    "import:csv": "node scripts/importFromCsv.js",
+    "full:import": "node scripts/fullImport.js"
   },
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^4.16.4",
     "joi": "^17.11.0",
     "morgan": "^1.10.0",
     "mysql2": "^2.3.2",
     "sequelize": "^6.8.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "xlsx": "^0.18.5"
   },
   "engines": {
     "node": ">=12.0.0"
