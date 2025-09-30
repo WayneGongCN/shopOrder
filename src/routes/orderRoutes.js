@@ -6,10 +6,13 @@ const {
   getOrderById,
   updateOrderStatus,
   getOrderStatusFlows,
-  getCustomerProductPrice
+  getCustomerProductPrice,
+  cancelOrder,
+  getOrderStatusInfo
 } = require("../controllers/orderController");
 const { validateRequest, validateQuery } = require("../middlewares/validation");
 const { orderSchema, orderStatusSchema, paginationSchema } = require("../utils/validation");
+const StatusValidationMiddleware = require("../middlewares/statusValidation");
 
 // 创建订单
 router.post("/", validateRequest(orderSchema), createOrder);
@@ -21,10 +24,23 @@ router.get("/", validateQuery(paginationSchema), getOrders);
 router.get("/:id", getOrderById);
 
 // 更新订单状态
-router.put("/:id/status", validateRequest(orderStatusSchema), updateOrderStatus);
+router.put("/:id/status", 
+  validateRequest(orderStatusSchema), 
+  StatusValidationMiddleware.validateStatusTransition, 
+  updateOrderStatus
+);
 
 // 获取订单状态流转记录
 router.get("/:id/status-flows", getOrderStatusFlows);
+
+// 获取订单状态信息
+router.get("/:id/status-info", StatusValidationMiddleware.getOrderStatusInfo, getOrderStatusInfo);
+
+// 取消订单
+router.put("/:id/cancel", 
+  StatusValidationMiddleware.validateOrderCancellation, 
+  cancelOrder
+);
 
 // 获取客户商品价格（用于订单创建时的价格计算）
 router.get("/customer/:customerId/product/:productId/price", getCustomerProductPrice);

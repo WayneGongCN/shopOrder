@@ -109,12 +109,15 @@ const orderSchema = Joi.object({
  */
 const orderStatusSchema = Joi.object({
   status: Joi.string().valid(
-    "draft", "confirmed", "processing", "shipped", "delivered", "cancelled"
+    "draft", "processing", "completed", "cancelled"
   ).required().messages({
     "any.only": "订单状态值不正确"
   }),
   operator: Joi.string().max(50).required().messages({
     "string.empty": "操作人不能为空"
+  }),
+  role: Joi.string().valid("admin").default("admin").messages({
+    "any.only": "角色值不正确"
   }),
   remark: Joi.string().allow("").optional()
 });

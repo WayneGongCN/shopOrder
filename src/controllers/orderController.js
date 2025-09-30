@@ -2,6 +2,7 @@ const { Order, OrderItem, Customer, Product, CustomerPrice, OrderStatusFlow, Ord
 const { success, pagination, notFound, serverError } = require("../utils/response");
 const { generateOrderNumber } = require("../utils/orderNumber");
 const { Op } = require("sequelize");
+const orderStatusService = require("../services/orderStatusService");
 
 /**
  * 创建订单
@@ -236,45 +237,29 @@ async function updateOrderStatus(req, res) {
   
   try {
     const { id } = req.params;
-    const { status, operator, remark } = req.body;
+    const { status, operator, role = "admin", remark } = req.body;
     
-    const order = await Order.findByPk(id);
-    
-    if (!order) {
-      await transaction.rollback();
-      return res.status(404).json(notFound("订单不存在"));
-    }
-    
-    const oldStatus = order.status;
-    
-    // 更新订单状态
-    await order.update({ status }, { transaction });
-    
-    // 记录状态流转
-    await OrderStatusFlow.create({
-      orderId: id,
-      fromStatus: oldStatus,
-      toStatus: status,
+    // 使用状态管理服务执行状态流转
+    const result = await orderStatusService.transitionStatus(
+      id,
+      req.orderStatusValidation.currentStatus,
+      status,
       operator,
-      remark
-    }, { transaction });
-    
-    // 记录订单历史
-    await OrderHistory.create({
-      orderId: id,
-      action: "status_changed",
-      description: `订单状态从 ${oldStatus} 变更为 ${status}`,
-      operator,
-      changes: { fromStatus: oldStatus, toStatus: status }
-    }, { transaction });
+      role,
+      remark,
+      transaction
+    );
     
     await transaction.commit();
     
-    res.json(success(null, "订单状态更新成功"));
+    res.json(success(result, "订单状态更新成功"));
   } catch (error) {
     await transaction.rollback();
     console.error("更新订单状态失败:", error);
-    res.status(500).json(serverError("更新订单状态失败"));
+    res.status(400).json({
+      success: false,
+      message: error.message || "更新订单状态失败"
+    });
   }
 }
 
@@ -287,10 +272,7 @@ async function getOrderStatusFlows(req, res) {
   try {
     const { id } = req.params;
     
-    const flows = await OrderStatusFlow.findAll({
-      where: { orderId: id },
-      order: [["created_at", "ASC"]]
-    });
+    const flows = await orderStatusService.getStatusFlowHistory(id);
     
     res.json(success(flows));
   } catch (error) {
@@ -339,11 +321,64 @@ async function getCustomerProductPrice(req, res) {
   }
 }
 
+
+/**
+ * 取消订单
+ * @param {object} req 请求对象
+ * @param {object} res 响应对象
+ */
+async function cancelOrder(req, res) {
+  const transaction = await Order.sequelize.transaction();
+  
+  try {
+    const { id } = req.params;
+    const { operator, role = "admin", remark } = req.body;
+    
+    const result = await orderStatusService.transitionStatus(
+      id,
+      req.cancellationValidation.order.status,
+      orderStatusService.STATUS.CANCELLED,
+      operator,
+      role,
+      remark || "订单取消",
+      transaction
+    );
+    
+    await transaction.commit();
+    
+    res.json(success(result, "订单取消成功"));
+  } catch (error) {
+    await transaction.rollback();
+    console.error("取消订单失败:", error);
+    res.status(400).json({
+      success: false,
+      message: error.message || "取消订单失败"
+    });
+  }
+}
+
+/**
+ * 获取订单状态信息
+ * @param {object} req 请求对象
+ * @param {object} res 响应对象
+ */
+async function getOrderStatusInfo(req, res) {
+  try {
+    res.json(success(req.orderStatusInfo));
+  } catch (error) {
+    console.error("获取订单状态信息失败:", error);
+    res.status(500).json(serverError("获取订单状态信息失败"));
+  }
+}
+
+
 module.exports = {
   createOrder,
   getOrders,
   getOrderById,
   updateOrderStatus,
   getOrderStatusFlows,
-  getCustomerProductPrice
+  getCustomerProductPrice,
+  cancelOrder,
+  getOrderStatusInfo
 };
