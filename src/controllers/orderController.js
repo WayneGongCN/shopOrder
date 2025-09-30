@@ -90,7 +90,7 @@ async function createOrder(req, res) {
             {
               model: Product,
               as: "product",
-              attributes: ["id", "name", "global_price", "unit"]
+              attributes: ["id", "name", "globalPrice", "unit"]
             }
           ]
         }
@@ -198,7 +198,7 @@ async function getOrderById(req, res) {
           {
             model: Product,
             as: "product",
-            attributes: ["id", "name", "global_price", "unit"]
+            attributes: ["id", "name", "globalPrice", "unit"]
           }
         ]
       }
