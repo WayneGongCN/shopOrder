@@ -38,7 +38,10 @@ function validate(data, schema) {
 const paginationSchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   pageSize: Joi.number().integer().min(1).max(100).default(20),
-  keyword: Joi.string().allow("").optional()
+  keyword: Joi.string().allow("").optional(),
+  status: Joi.string().valid("draft", "processing", "completed", "cancelled").allow("").optional(),
+  startDate: Joi.date().allow("").optional(),
+  endDate: Joi.date().allow("").optional()
 });
 
 /**
