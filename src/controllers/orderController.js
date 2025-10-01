@@ -141,12 +141,12 @@ async function getOrders(req, res) {
     
     // 日期范围筛选
     if (startDate || endDate) {
-      where.createdAt = {};
+      where.created_at = {};
       if (startDate) {
-        where.createdAt[Op.gte] = new Date(startDate);
+        where.created_at[Op.gte] = new Date(startDate);
       }
       if (endDate) {
-        where.createdAt[Op.lte] = new Date(endDate);
+        where.created_at[Op.lte] = new Date(endDate);
       }
     }
     
@@ -169,7 +169,7 @@ async function getOrders(req, res) {
       ],
       limit: parseInt(pageSize),
       offset,
-      order: [["createdAt", "DESC"]]
+      order: [["created_at", "DESC"]]
     });
     
     res.json(pagination(rows, count, page, pageSize));
@@ -201,7 +201,7 @@ async function getOrderById(req, res) {
           {
             model: Product,
             as: "product",
-            attributes: ["id", "name", "globalPrice", "unit"]
+            attributes: ["id", "name", "globalPrice", "unit"],
           }
         ]
       },
@@ -255,7 +255,10 @@ async function updateOrder(req, res) {
   
   try {
     const { id } = req.params;
-    const { customerId, items, remark, operator } = req.body;
+    const { customerId, items, remark } = req.body;
+    
+    // 自动获取操作人信息
+    const operator = req.headers["x-wx-openid"] || "unknown";
     
     // 检查订单是否存在
     const order = await Order.findByPk(id, { 
@@ -462,7 +465,7 @@ async function cancelOrder(req, res) {
     const { remark } = req.body;
     
     // 自动获取操作人信息
-    const operator = req.headers["x-user-name"] || req.headers["x-wx-openid"] || "system";
+    const operator = req.headers["x-wx-openid"] || "unknown";
     const role = "admin";
     
     const result = await orderStatusService.transitionStatus(
