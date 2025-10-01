@@ -38,7 +38,8 @@ async function createOrder(req, res) {
     let totalAmount = 0;
     
     // 创建订单项
-    for (const item of items) {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
       const { productId, quantity, unit, unitPrice } = item;
       
       // 获取商品信息
@@ -58,7 +59,8 @@ async function createOrder(req, res) {
         unit,
         quantity,
         unitPrice,
-        totalPrice
+        totalPrice,
+        sortOrder: i + 1
       }, { transaction });
     }
     
@@ -87,6 +89,7 @@ async function createOrder(req, res) {
         {
           model: OrderItem,
           as: "items",
+          order: [["sort_order", "ASC"]],
           include: [
             {
               model: Product,
@@ -290,6 +293,7 @@ async function updateOrder(req, res) {
     // 重新计算总金额
     const currentItems = await OrderItem.findAll({
       where: { orderId: id },
+      order: [["sort_order", "ASC"]],
       transaction
     });
     
@@ -335,7 +339,8 @@ async function handleReplaceItems(orderId, items, changes, transaction) {
   });
   
   // 创建新的订单项
-  for (const item of items) {
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
     const { productId, quantity, unit, unitPrice } = item;
     
     // 获取商品信息
@@ -353,7 +358,8 @@ async function handleReplaceItems(orderId, items, changes, transaction) {
       unit,
       quantity,
       unitPrice,
-      totalPrice
+      totalPrice,
+      sortOrder: i + 1
     }, { transaction });
   }
   

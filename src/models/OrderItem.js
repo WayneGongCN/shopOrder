@@ -55,6 +55,13 @@ const OrderItem = sequelize.define("OrderItem", {
     type: DataTypes.TEXT,
     allowNull: true,
     comment: "备注"
+  },
+  sortOrder: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+    comment: "排序顺序",
+    field: "sort_order"
   }
 }, {
   tableName: "order_items",
