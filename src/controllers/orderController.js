@@ -101,7 +101,23 @@ async function createOrder(req, res) {
       ]
     });
     
-    res.status(201).json(success(result, "订单创建成功"));
+    // 构建干净的订单响应数据
+    const orderData = result.toJSON();
+    const cleanResult = {
+      id: orderData.id,
+      orderNo: orderData.orderNo,
+      customerId: orderData.customerId,
+      totalAmount: orderData.totalAmount,
+      status: orderData.status,
+      remark: orderData.remark,
+      createdBy: orderData.createdBy,
+      createdAt: orderData.createdAt,
+      updatedAt: orderData.updatedAt,
+      customer: orderData.customer,
+      items: orderData.items
+    };
+    
+    res.status(201).json(success(cleanResult, "订单创建成功"));
   } catch (error) {
     await transaction.rollback();
     console.error("创建订单失败:", error);
@@ -197,6 +213,7 @@ async function getOrderById(req, res) {
       {
         model: OrderItem,
         as: "items",
+        order: [["sort_order", "ASC"]],
         include: [
           {
             model: Product,
@@ -232,8 +249,20 @@ async function getOrderById(req, res) {
     const statusFlows = await orderStatusService.getStatusFlowHistory(id);
     
     // 构建完整的订单详情响应
+    const orderData = order.toJSON();
     const orderDetail = {
-      ...order.toJSON(),
+      id: orderData.id,
+      orderNo: orderData.orderNo,
+      customerId: orderData.customerId,
+      totalAmount: orderData.totalAmount,
+      status: orderData.status,
+      remark: orderData.remark,
+      createdBy: orderData.createdBy,
+      createdAt: orderData.createdAt,
+      updatedAt: orderData.updatedAt,
+      customer: orderData.customer,
+      items: orderData.items,
+      histories: orderData.histories,
       statusInfo,
       statusFlows
     };
@@ -255,14 +284,18 @@ async function updateOrder(req, res) {
   
   try {
     const { id } = req.params;
-    const { customerId, items, remark } = req.body;
+    const { items, remark } = req.body;
     
     // 自动获取操作人信息
     const operator = req.headers["x-wx-openid"] || "unknown";
     
     // 检查订单是否存在
     const order = await Order.findByPk(id, { 
-      include: [{ model: OrderItem, as: "items" }],
+      include: [{ 
+        model: OrderItem, 
+        as: "items",
+        order: [["sort_order", "ASC"]]
+      }],
       transaction 
     });
     if (!order) {
