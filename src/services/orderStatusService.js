@@ -1,4 +1,4 @@
-const { Order, OrderStatusFlow, OrderHistory } = require("../models");
+const { Order, OrderHistory } = require("../models");
 
 /**
  * 订单状态管理服务
@@ -106,16 +106,7 @@ class OrderStatusService {
       { where: { id: orderId }, transaction }
     );
 
-    // 记录状态流转
-    await OrderStatusFlow.create({
-      orderId,
-      fromStatus,
-      toStatus,
-      operator,
-      remark
-    }, { transaction });
-
-    // 记录订单历史
+    // 记录订单历史（包含状态流转信息）
     await OrderHistory.create({
       orderId,
       action: "status_changed",
@@ -124,7 +115,10 @@ class OrderStatusService {
       changes: { 
         fromStatus, 
         toStatus,
+        fromStatusDesc: this.getStatusDescription(fromStatus),
+        toStatusDesc: this.getStatusDescription(toStatus),
         role,
+        remark,
         timestamp: new Date().toISOString()
       }
     }, { transaction });
@@ -144,20 +138,23 @@ class OrderStatusService {
    * @returns {Promise<Array>} 状态流转历史
    */
   async getStatusFlowHistory(orderId) {
-    const flows = await OrderStatusFlow.findAll({
-      where: { orderId },
+    const histories = await OrderHistory.findAll({
+      where: { 
+        orderId,
+        action: "status_changed"
+      },
       order: [["createdAt", "ASC"]]
     });
 
-    return flows.map(flow => ({
-      id: flow.id,
-      fromStatus: flow.fromStatus,
-      toStatus: flow.toStatus,
-      fromStatusDesc: this.getStatusDescription(flow.fromStatus),
-      toStatusDesc: this.getStatusDescription(flow.toStatus),
-      operator: flow.operator,
-      remark: flow.remark,
-      createdAt: flow.createdAt
+    return histories.map(history => ({
+      id: history.id,
+      fromStatus: history.changes?.fromStatus || null,
+      toStatus: history.changes?.toStatus || null,
+      fromStatusDesc: history.changes?.fromStatusDesc || this.getStatusDescription(history.changes?.fromStatus),
+      toStatusDesc: history.changes?.toStatusDesc || this.getStatusDescription(history.changes?.toStatus),
+      operator: history.operator,
+      remark: history.changes?.remark || "",
+      createdAt: history.createdAt
     }));
   }
 

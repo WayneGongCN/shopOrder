@@ -1,4 +1,4 @@
-const { Order, OrderItem, Customer, Product, CustomerPrice, OrderStatusFlow, OrderHistory } = require("../models");
+const { Order, OrderItem, Customer, Product, CustomerPrice, OrderHistory } = require("../models");
 const { success, pagination, notFound, serverError } = require("../utils/response");
 const { generateOrderNumber } = require("../utils/orderNumber");
 const { Op } = require("sequelize");

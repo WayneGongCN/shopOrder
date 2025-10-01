@@ -3,7 +3,6 @@ const Customer = require("./Customer");
 const Order = require("./Order");
 const OrderItem = require("./OrderItem");
 const CustomerPrice = require("./CustomerPrice");
-const OrderStatusFlow = require("./OrderStatusFlow");
 const OrderHistory = require("./OrderHistory");
 const SystemConfig = require("./SystemConfig");
 
@@ -28,10 +27,6 @@ CustomerPrice.belongsTo(Customer, { foreignKey: "customer_id", as: "customer" })
 Product.hasMany(CustomerPrice, { foreignKey: "product_id", as: "customerPrices" });
 CustomerPrice.belongsTo(Product, { foreignKey: "product_id", as: "product" });
 
-// 订单与状态流转：一对多
-Order.hasMany(OrderStatusFlow, { foreignKey: "order_id", as: "statusFlows" });
-OrderStatusFlow.belongsTo(Order, { foreignKey: "order_id", as: "order" });
-
 // 订单与历史记录：一对多
 Order.hasMany(OrderHistory, { foreignKey: "order_id", as: "histories" });
 OrderHistory.belongsTo(Order, { foreignKey: "order_id", as: "order" });
@@ -42,7 +37,6 @@ module.exports = {
   Order,
   OrderItem,
   CustomerPrice,
-  OrderStatusFlow,
   OrderHistory,
   SystemConfig
 };
