@@ -68,7 +68,10 @@ function error(message = "error", code = 500, data = null) {
  * @param {string} message 错误消息
  * @returns {object} 参数错误响应对象
  */
-function badRequest(message = "参数错误") {
+function badRequest(message = "参数错误", errors) {
+  if (Array.isArray(errors)) {
+    message = errors.map(error => `${error.field}: ${error.message}`).join("\n");
+  }
   return error(message, 400);
 }
 

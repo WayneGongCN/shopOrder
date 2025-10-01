@@ -276,19 +276,6 @@ async function updateOrder(req, res) {
     const updateData = {};
     const changes = {};
     
-    // 更新客户信息
-    if (customerId && customerId !== order.customerId) {
-      // 检查新客户是否存在
-      const customer = await Customer.findByPk(customerId, { transaction });
-      if (!customer) {
-        await transaction.rollback();
-        return res.status(404).json(notFound("客户不存在"));
-      }
-      
-      updateData.customerId = customerId;
-      changes.customerId = { from: order.customerId, to: customerId };
-    }
-    
     // 更新备注
     if (remark !== undefined && remark !== order.remark) {
       updateData.remark = remark;
