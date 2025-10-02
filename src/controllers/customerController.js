@@ -185,28 +185,34 @@ async function getCustomerProducts(req, res) {
       order: [["name", "ASC"]]
     });
     
-    // 为每个商品获取客户专属价格
-    const productsWithPrices = await Promise.all(
-      rows.map(async (product) => {
-        const customerPrice = await CustomerPrice.findOne({
-          where: {
-            customerId,
-            productId: product.id
-          }
-        });
-        
-        return {
-          id: product.id,
-          name: product.name,
-          globalPrice: product.globalPrice,
-          unit: product.unit,
-          price: customerPrice ? customerPrice.price : product.globalPrice,
-          isCustomPrice: !!customerPrice,
-          createdAt: product.createdAt,
-          updatedAt: product.updatedAt
-        };
-      })
-    );
+    // 批量获取客户专属价格
+    const productIds = rows.map(product => product.id);
+    const customerPrices = await CustomerPrice.findAll({
+      where: {
+        customerId,
+        productId: {
+          [Op.in]: productIds
+        }
+      }
+    });
+    
+    // 创建价格映射
+    const priceMap = {};
+    customerPrices.forEach(cp => {
+      priceMap[cp.productId] = cp.price;
+    });
+    
+    // 组装最终结果
+    const productsWithPrices = rows.map(product => ({
+      id: product.id,
+      name: product.name,
+      globalPrice: product.globalPrice,
+      unit: product.unit,
+      price: priceMap[product.id] || product.globalPrice,
+      isCustomPrice: !!priceMap[product.id],
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt
+    }));
     
     res.json(pagination(productsWithPrices, count, page, pageSize));
   } catch (error) {
