@@ -5,6 +5,57 @@ const { Op } = require("sequelize");
 const orderStatusService = require("../services/orderStatusService");
 
 /**
+ * 批量更新客户专属价格
+ * @param {string} customerId 客户ID
+ * @param {Array} items 订单项数组
+ * @param {object} transaction 数据库事务
+ */
+async function batchUpdateCustomerPrices(customerId, items, transaction) {
+  for (const item of items) {
+    const { productId, unitPrice } = item;
+    
+    // 获取商品默认价格
+    const product = await Product.findByPk(productId, { transaction });
+    if (!product) {
+      continue;
+    }
+    
+    // 如果订单中的价格与商品默认价格不同，则创建或更新专属价格
+    if (parseFloat(unitPrice) !== parseFloat(product.globalPrice)) {
+      await CustomerPrice.findOrCreate({
+        where: {
+          customerId,
+          productId
+        },
+        defaults: {
+          customerId,
+          productId,
+          price: unitPrice
+        },
+        transaction
+      }).then(([customerPrice, created]) => {
+        if (!created) {
+          // 如果已存在且价格不同，则更新
+          if (parseFloat(customerPrice.price) !== parseFloat(unitPrice)) {
+            return customerPrice.update({ price: unitPrice }, { transaction });
+          }
+        }
+        return customerPrice;
+      });
+    } else {
+      // 如果价格与默认价格相同，删除专属价格（如果存在）
+      await CustomerPrice.destroy({
+        where: {
+          customerId,
+          productId
+        },
+        transaction
+      });
+    }
+  }
+}
+
+/**
  * 创建订单
  * @param {object} req 请求对象
  * @param {object} res 响应对象
@@ -75,6 +126,9 @@ async function createOrder(req, res) {
       operator: req.headers["x-wx-openid"] || "system",
       changes: { items, totalAmount }
     }, { transaction });
+    
+    // 批量更新客户专属价格
+    await batchUpdateCustomerPrices(customerId, items, transaction);
     
     await transaction.commit();
     
@@ -324,6 +378,9 @@ async function updateOrder(req, res) {
     // 更新订单项（直接替换所有订单项）
     if (items && items.length > 0) {
       await handleReplaceItems(id, items, changes, transaction);
+      
+      // 批量更新客户专属价格
+      await batchUpdateCustomerPrices(order.customerId, items, transaction);
     }
     
     // 重新计算总金额
@@ -444,45 +501,6 @@ async function updateOrderStatus(req, res) {
 }
 
 
-/**
- * 获取客户专属价格（用于订单创建时的价格计算）
- * @param {object} req 请求对象
- * @param {object} res 响应对象
- */
-async function getCustomerProductPrice(req, res) {
-  try {
-    const { customerId, productId } = req.params;
-    
-    // 查找客户专属价格
-    const customerPrice = await CustomerPrice.findOne({
-      where: {
-        customerId,
-        productId
-      }
-    });
-    
-    // 如果没有专属价格，返回商品默认价格
-    if (!customerPrice) {
-      const product = await Product.findByPk(productId);
-      if (!product) {
-        return res.status(404).json(notFound("商品不存在"));
-      }
-      
-      return res.json(success({
-        price: product.globalPrice,
-        isCustom: false
-      }));
-    }
-    
-    res.json(success({
-      price: customerPrice.price,
-      isCustom: true
-    }));
-  } catch (error) {
-    console.error("获取客户商品价格失败:", error);
-    res.status(500).json(serverError("获取客户商品价格失败"));
-  }
-}
 
 
 /**
@@ -532,6 +550,5 @@ module.exports = {
   getOrderById,
   updateOrder,
   updateOrderStatus,
-  getCustomerProductPrice,
   cancelOrder
 };

@@ -6,7 +6,6 @@ const {
   getOrderById,
   updateOrder,
   updateOrderStatus,
-  getCustomerProductPrice,
   cancelOrder
 } = require("../controllers/orderController");
 const { validateRequest, validateQuery } = require("../middlewares/validation");
@@ -38,8 +37,5 @@ router.put("/:id/cancel",
   StatusValidationMiddleware.validateOrderCancellation, 
   cancelOrder
 );
-
-// 获取客户商品价格（用于订单创建时的价格计算）
-router.get("/customer/:customerId/product/:productId/price", getCustomerProductPrice);
 
 module.exports = router;
